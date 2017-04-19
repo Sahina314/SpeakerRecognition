@@ -1,0 +1,37 @@
+{
+  "name": "speakerrecogitionserver",
+  "version": "1.0.0",
+  "description": "Helps to Verify Speaker based on their voice",
+  "main": "server.js",
+  "scripts": {
+    "test": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SahinaNasrin31/NodejsBinaryServer.git"
+  },
+  "keywords": [
+    "Binary",
+    "Speaker",
+    "Recognition"
+  ],
+  "author": "Sahina Nasrin",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SahinaNasrin31/NodejsBinaryServer/issues"
+  },
+  "engines": {
+    "node": "7.1.0"
+  },
+  "homepage": "https://github.com/SahinaNasrin31/NodejsBinaryServer#readme",
+  "dependencies": {
+    "binaryjs": "^0.2.1",
+    "express": "^4.15.2",
+    "fluent-ffmpeg": "^2.1.0",
+    "fs": "0.0.1-security",
+    "http": "0.0.0",
+    "request": "^2.81.0",
+    "unirest": "^0.5.1",
+    "wav": "^1.0.1"
+  }
+}
