@@ -21,7 +21,7 @@ app.get('/:id', function(req, res) {
     .end(function (response) {
       console.log(response.body);
       resp=response.body;
-      fs.readFile('./verificationprofileid.json', 'utf-8', function(err, data) {
+      fs.readFile('./VerificationProfileid.json', 'utf-8', function(err, data) {
       if (err) throw err
 
       var arrayOfObjects = JSON.parse(data)
@@ -31,7 +31,7 @@ app.get('/:id', function(req, res) {
       })
 
       console.log(arrayOfObjects)
-      fs.writeFile('./verificationprofileid.json', JSON.stringify(arrayOfObjects,null,4), 'utf-8', function(err) {
+      fs.writeFile('./VerificationProfileid.json', JSON.stringify(arrayOfObjects,null,4), 'utf-8', function(err) {
         if (err) throw err
         console.log('Done!')
       })
@@ -90,7 +90,7 @@ bs.on('connection', function(client){
         {
           username=meta.username;
           var pid;
-          fs.readFile('./verificationprofileid.json', 'utf-8', function(err, data) {
+          fs.readFile('./VerificationProfileid.json', 'utf-8', function(err, data) {
           if (err) throw err
 
           var arrayOfObjects = JSON.parse(data)
@@ -121,7 +121,7 @@ bs.on('connection', function(client){
           var pid;
           console.log("enroll");
           console.log("sending..");
-          fs.readFile('./verificationprofileid.json', 'utf-8', function(err, data) {
+          fs.readFile('./VerificationProfileid.json', 'utf-8', function(err, data) {
           if (err) throw err
 
           var arrayOfObjects = JSON.parse(data)
