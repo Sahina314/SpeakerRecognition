@@ -13,7 +13,7 @@ var app = express();
 app.set('port', (process.env.PORT || 9000));
 
 app.use(express.static(__dirname + '/public'));
-app.get('/:id', function(req, res) {
+app.get('/users/:id', function(req, res) {
   res.send(req.params.id);
   unirest.post('https://westus.api.cognitive.microsoft.com/spid/v1.0/verificationProfiles')
     .headers({'Content-Type': 'application/json', 'Ocp-Apim-Subscription-Key' : '530fc76e57ff41ee8af9314c8a716166'})
