@@ -43,11 +43,11 @@ return new promise(function(resolve,reject)
   if(err) {
     return console.error('error fetching client from pool', err);
   }
-  client.query('SELECT status from connectedhomemonitor.checkstatus2 where device_name=\''+id+'\'', function(err, result) {
+  client.query('SELECT vr_generated_profileid from sensordata.voicerecog_pofileid_mst where username=\''+id+'\'', function(err, result) {
     done(err);
     if(err) {
-      console.error('error running query', err);
-      //return resolve("Success");
+      //console.error('error running query', err);
+      return resolve("Success");
     }
     if(result.rows.length>0)
     {
@@ -87,7 +87,7 @@ app.get('/users/:subid/:id', function(req, res) {
           if(err) {
             return console.error('error fetching client from pool', err);
           }
-          client.query('Insert into connectedhomemonitor.checkstatus2 values(\''+req.params.id+'\',\''+response.body.verificationProfileId+'\')', function(err, result) {
+          client.query('Insert into sensordata.voicerecog_pofileid_mst(username,vr_generated_profileid) values(\''+req.params.id+'\',\''+response.body.verificationProfileId+'\')', function(err, result) {
             done(err);
             if(err) {
               return console.error('error running query', err);
