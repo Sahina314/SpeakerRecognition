@@ -10,9 +10,9 @@ var promise=require('promise');
 var config = {
   user:'postgres',
   database:'postgres',
-  password: 'postgres',
-  host: 'localhost',
-  port: 5432, //env var: PGPORT
+  password: 'pega@123',
+  host: '52.37.247.51',
+  port: 5433, //env var: PGPORT
   max: 10, // max number of clients in the pool
   idleTimeoutMillis: 30000, // how long a client is allowed to remain idle before being closed
 };
