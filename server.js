@@ -51,7 +51,7 @@ return new promise(function(resolve,reject)
     }
     if(result.rows.length>0)
     {
-      return reject(result.rows[0].status);
+      return reject(result.rows[0].vr_generated_profileid);
     }
     return resolve("Success");
   /*  checkExist(result.rows,id).then(function(result)
