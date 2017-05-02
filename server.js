@@ -6,7 +6,70 @@ var unirest = require('unirest');
 var file;
 var resp;
 var profileid;
+var promise=require('promise');
+var config = {
+  user:'postgres',
+  database:'postgres',
+  password: 'postgres',
+  host: 'localhost',
+  port: 5432, //env var: PGPORT
+  max: 10, // max number of clients in the pool
+  idleTimeoutMillis: 30000, // how long a client is allowed to remain idle before being closed
+};
+var pool = new pg.Pool(config);
+function checkExist(rows,id)
+{
+  return new promise(function(resolve,reject)
+{
+  for(var i=0;i<rows.length;i++)
+  {
 
+    if(rows[i].device_name==id)
+    {
+      //console.log("unsuccess");
+      return reject("Unsucess");
+    }
+
+  }
+  //console.log("success");
+  return resolve("Suceess");
+});
+}
+function checkUsernameExist(id)
+{
+return new promise(function(resolve,reject)
+{
+  pool.connect(function(err, client, done) {
+  if(err) {
+    return console.error('error fetching client from pool', err);
+  }
+  client.query('SELECT status from connectedhomemonitor.checkstatus2 where device_name=\''+id+'\'', function(err, result) {
+    done(err);
+    if(err) {
+      console.error('error running query', err);
+      //return resolve("Success");
+    }
+    if(result.rows.length>0)
+    {
+      return reject(result.rows[0].status);
+    }
+    return resolve("Success");
+  /*  checkExist(result.rows,id).then(function(result)
+  {
+    return resolve(result);
+  },function(error)
+{
+  return reject(error);
+});*/
+
+});
+});
+pool.on('error', function (err, client) {
+
+  console.error('idle client error', err.message, err.stack)
+})
+});
+}
 // Serve client side statically
 var express = require('express');
 var app = express();
@@ -14,35 +77,29 @@ app.set('port', (process.env.PORT || 9000));
 
 app.use(express.static(__dirname + '/public'));
 app.get('/users/:subid/:id', function(req, res) {
-  res.send(req.params.id);
-  unirest.post('https://westus.api.cognitive.microsoft.com/spid/v1.0/verificationProfiles')
-    .headers({'Content-Type': 'application/json', 'Ocp-Apim-Subscription-Key' : req.params.subid})
-    .send("{\"locale\":\"en-us\",}")
-    .end(function (response) {
-      console.log(response.body);
-      resp=response.body;
-      fs.readFile('./VerificationProfileid.json', 'utf-8', function(err, data) {
-      if (err) throw err
-
-      var arrayOfObjects = JSON.parse(data)
-      arrayOfObjects.users.push({
-        username: req.params.id,
-        profileid:response.body.verificationProfileId
-      })
-
-      console.log(arrayOfObjects)
-      fs.writeFile('./VerificationProfileid.json', JSON.stringify(arrayOfObjects,null,4), 'utf-8', function(err) {
-        if (err) throw err
-        console.log('Done!')
-      })
-    })
-      //stream.write(resp);
-  })
-
-
-  
+   checkUsernameExist(req.params.id).then(function(result){
+      console.log("post call"+result);
+      unirest.post('https://westus.api.cognitive.microsoft.com/spid/v1.0/verificationProfiles')
+        .headers({'Content-Type': 'application/json', 'Ocp-Apim-Subscription-Key' : req.params.subid})
+        .send("{\"locale\":\"en-us\",}")
+        .end(function (response) {
+          pool.connect(function(err, client, done) {
+          if(err) {
+            return console.error('error fetching client from pool', err);
+          }
+          client.query('Insert into connectedhomemonitor.checkstatus2 values(\''+req.params.id+'\',\''+response.body.verificationProfileId+'\')', function(err, result) {
+            done(err);
+            if(err) {
+              return console.error('error running query', err);
+            }
+            res.send("Id created");
+          });
+        });
+      });
+    },function(error){
+      res.send("Already exist");
+    });
 });
-
 
 //For streaming Binaryjs server is established
 
@@ -89,62 +146,44 @@ bs.on('connection', function(client){
         if(meta.name=="verify")
         {
           username=meta.username;
-          var pid;
-          fs.readFile('./VerificationProfileid.json', 'utf-8', function(err, data) {
-          if (err) throw err
-
-          var arrayOfObjects = JSON.parse(data)
-          console.log(Object.keys(arrayOfObjects.users).length);
-          for(var i=0;i<Object.keys(arrayOfObjects.users).length;i++)
+          checkUsernameExist(meta.username).then(function(result){
+            stream.write("Invalid username");
+          },function(result)
           {
-            if((arrayOfObjects.users[i].username)==username)
-            {
-              pid=arrayOfObjects.users[i].profileid;
-            }
-          }
-          console.log(pid);
-          console.log("verify");
-          console.log("sending..");
-        unirest.post('https://westus.api.cognitive.microsoft.com/spid/v1.0/verify?verificationProfileId='+pid)
-          .headers({'Content-Type': 'multipart/form-data', 'Ocp-Apim-Subscription-Key' : meta.subid})
-          .attach('file', 'myvoiceverify.wav') // Attachment
-          .end(function (response) {
-            console.log(response.body);
-            resp=response.body;
-            stream.write(resp);
+            console.log("verify");
+            console.log("sending..");
+          unirest.post('https://westus.api.cognitive.microsoft.com/spid/v1.0/verify?verificationProfileId='+result)
+            .headers({'Content-Type': 'multipart/form-data', 'Ocp-Apim-Subscription-Key' : meta.subid})
+            .attach('file', 'myvoiceverify.wav') // Attachment
+            .end(function (response) {
+              console.log(response.body);
+              resp=response.body;
+              stream.write(resp);
 
-          })})
+            });
+          });
         }
         else if(meta.name=="enroll")
         {
           username=meta.username;
-          var pid;
+          //var pid;
+          checkUsernameExist(meta.username).then(function(result){
+            stream.write("Invalid username");
+          },function(result)
+          {
           console.log("enroll");
           console.log("sending..");
-          fs.readFile('./VerificationProfileid.json', 'utf-8', function(err, data) {
-          if (err) throw err
 
-          var arrayOfObjects = JSON.parse(data)
-          console.log(Object.keys(arrayOfObjects.users).length);
-          for(var i=0;i<Object.keys(arrayOfObjects.users).length;i++)
-          {
-            if((arrayOfObjects.users[i].username)==username)
-            {
-              pid=arrayOfObjects.users[i].profileid;
-            }
-          }
-          console.log(pid);
           //console.log(arrayOfObjects.users[0].profileid);
 
-        unirest.post('https://westus.api.cognitive.microsoft.com/spid/v1.0/verificationProfiles/'+pid+'/enroll')
+        unirest.post('https://westus.api.cognitive.microsoft.com/spid/v1.0/verificationProfiles/'+result+'/enroll')
           .headers({'Content-Type': 'multipart/form-data', 'Ocp-Apim-Subscription-Key' : meta.subid})
           .attach('file', 'myvoiceverify.wav') // Attachment
           .end(function (response) {
             console.log(response.body);
             resp=response.body;
             stream.write(resp);
-        })
-        })
+        });});
         }
 
       });
