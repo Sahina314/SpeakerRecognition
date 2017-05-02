@@ -1,4 +1,4 @@
-
+var pg = require("pg");
 var fs = require('fs');
 var http = require('http');
 const request = require('request');
