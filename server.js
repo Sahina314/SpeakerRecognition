@@ -147,7 +147,9 @@ bs.on('connection', function(client){
         {
           username=meta.username;
           checkUsernameExist(meta.username).then(function(result){
+			console.log("Invalid username");
             stream.write("Invalid username");
+            
           },function(result)
           {
             console.log("verify");
